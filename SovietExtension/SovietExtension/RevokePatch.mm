@@ -101,6 +101,7 @@ typedef struct {
     uintptr_t messageWrapDestructVA;
     uintptr_t insertPaySysMsgToSessionVA;
     uintptr_t YMMultiOpenTryPreventMultiInstanceVA;
+    uintptr_t YMGetMainWeixinProcessCountVA;
 
     YMMessageWrapLayout layout;
     
@@ -135,6 +136,8 @@ static const YMWeChatAdaptProfile YMAdaptProfiles[] = {
         // sub_3822FA4：内部会构造 type=10000 + paymsg XML，然后调用 ym_AddLocalMessageWrap。
         .insertPaySysMsgToSessionVA = 0x3822FA4, // [CDATA]->
         .YMMultiOpenTryPreventMultiInstanceVA = 0x1C0A64,
+        // 4.1.9 暂时没有适配这个进程数量检测点，填 0 表示跳过。
+        .YMGetMainWeixinProcessCountVA = 0x449E2BC,
 
         .layout = {
             .messageWrapSize = 616,
@@ -176,6 +179,8 @@ static const YMWeChatAdaptProfile YMAdaptProfiles[] = {
         // sub_3822FA4：内部会构造 type=10000 + paymsg XML，然后调用 ym_AddLocalMessageWrap。
         .insertPaySysMsgToSessionVA = 0x38EBBFC, // [CDATA]->
         .YMMultiOpenTryPreventMultiInstanceVA = 0x1C4EA8,
+        // GetMainWeixinProcessCount：统计当前 BundleID 的微信进程数量
+        .YMGetMainWeixinProcessCountVA = 0x449E2BC,
 
         .layout = {
             .messageWrapSize = 616,
@@ -205,6 +210,8 @@ static const YMWeChatAdaptProfile YMAdaptProfiles[] = {
          .messageWrapFromRawVA = 新版地址,
          .messageWrapDestructVA = 新版地址,
          .insertPaySysMsgToSessionVA = 新版地址,
+         .YMMultiOpenTryPreventMultiInstanceVA = 新版多开入口地址,
+         .YMGetMainWeixinProcessCountVA = 新版进程数量检测地址，没有就填 0,
 
          .layout = {
              .messageWrapSize = 616,
@@ -1157,19 +1164,59 @@ static BOOL YMPatchMultiOpenWithWeChatDylibSlide(intptr_t slide, NSString *sourc
     YMWeChatDylibSlide = (uintptr_t)slide;
 
     uintptr_t tryPreventAddress = YMRuntimeAddress(YMActiveProfile->YMMultiOpenTryPreventMultiInstanceVA);
+    uintptr_t processCountAddress = YMRuntimeAddress(YMActiveProfile->YMGetMainWeixinProcessCountVA);
 
-    YMLog(@"try install multi open patch from %@, slide=0x%lx, sub_1C0A64=0x%lx",
+    YMLog(@"try install multi open patch from %@, profile=%s, slide=0x%lx, tryPrevent=0x%lx, processCount=0x%lx",
           source,
+          YMActiveProfile->displayName,
           (unsigned long)YMWeChatDylibSlide,
-          (unsigned long)tryPreventAddress);
+          (unsigned long)tryPreventAddress,
+          (unsigned long)processCountAddress);
 
-    BOOL ok1 = YMPatchARM64ReturnYES(tryPreventAddress,
-                                     "multi open: Resources/wechat.dylib::sub_1C0A64 TryPreventMultiInstance");
+    /*
+     多开需要尽量同时绕过两层：
+       1. TryPreventMultiInstance：启动早期防多开逻辑。
+       2. GetMainWeixinProcessCount：通过 NSRunningApplication 统计同 BundleID 进程数量。
+          4.1.10 如果不 patch 这个函数，第二个微信实例会检测到已有进程，
+          很容易进入反复授权 / 防多开流程。
+     */
+    BOOL patchedAny = NO;
+    BOOL finalOK = YES;
 
-    YMHasPatchedMultiOpenResourceDylib = ok1;
+    if (tryPreventAddress != 0) {
+        BOOL okTryPrevent = YMPatchARM64ReturnYES(
+            tryPreventAddress,
+            "multi open: TryPreventMultiInstance -> return 1"
+        );
 
-    YMLog(@"multi open patch summary: sub_1C0A64=%@, final=%@",
-          ok1 ? @"OK" : @"FAIL",
+        patchedAny = YES;
+        finalOK = finalOK && okTryPrevent;
+
+        YMLog(@"multi open TryPreventMultiInstance patch=%@",
+              okTryPrevent ? @"OK" : @"FAIL");
+    } else {
+        YMLog(@"multi open TryPreventMultiInstance address is zero, skip");
+    }
+
+    if (processCountAddress != 0) {
+        BOOL okProcessCount = YMPatchARM64ReturnYES(
+            processCountAddress,
+            "multi open: GetMainWeixinProcessCount -> return 1"
+        );
+
+        patchedAny = YES;
+        finalOK = finalOK && okProcessCount;
+
+        YMLog(@"multi open GetMainWeixinProcessCount patch=%@",
+              okProcessCount ? @"OK" : @"FAIL");
+    } else {
+        YMLog(@"multi open GetMainWeixinProcessCount address is zero, skip");
+    }
+
+    YMHasPatchedMultiOpenResourceDylib = patchedAny && finalOK;
+
+    YMLog(@"multi open patch summary: patchedAny=%@, final=%@",
+          patchedAny ? @"YES" : @"NO",
           YMHasPatchedMultiOpenResourceDylib ? @"OK" : @"FAIL");
 
     return YMHasPatchedMultiOpenResourceDylib;

@@ -7,18 +7,18 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.AddressBreakpoint">
          <BreakpointContent
-            uuid = "72245FDA-C3E9-4908-B04E-0E1FF507B940"
+            uuid = "0D1DE205-D5CA-46A7-BE6E-73CA37FF104D"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            symbolName = "*0x12266b1a0">
+            symbolName = "*0x11ee7b6f4">
             <Locations>
                <Location
-                  uuid = "72245FDA-C3E9-4908-B04E-0E1FF507B940 - b57c2af43e5db18a"
+                  uuid = "0D1DE205-D5CA-46A7-BE6E-73CA37FF104D - 2d9e666ad1d462a4"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "___lldb_unnamed_symbol_26bf138"
+                  symbolName = "___lldb_unnamed_symbol_1b1f6f4"
                   moduleName = "wechat.dylib"
                   usesParentBreakpointCondition = "Yes">
                </Location>
