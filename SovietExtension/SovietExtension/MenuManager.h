@@ -16,7 +16,7 @@ static NSString *kExitChatroomNick = @"kExitChatroomNick.SOVIET";
 static NSString *kUseSystemWeb = @"kUseSystemWeb.SOVIET";
 static NSString *kIsFirstLoad = @"kIsFirstLoad.SOVIET";
 static NSString *kAutoLogin = @"kAutoLogin.SOVIET";
-static NSString *kCurrentVersion = @"1.0.9";
+static NSString *kCurrentVersion = @"1.1.0";
 
 @interface MenuManager : NSObject
 + (void)hook;

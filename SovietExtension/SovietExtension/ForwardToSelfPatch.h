@@ -1,7 +1,8 @@
 //
 //  ForwardToSelfPatch.h
 //  SovietExtension
-//
+//  Thanks Code by https://github.com/shay-wong
+
 //  撤回消息 → 同步发送给自己（全设备同步）
 //
 //  依赖：

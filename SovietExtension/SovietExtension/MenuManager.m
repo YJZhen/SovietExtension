@@ -42,6 +42,25 @@
                                                               key:kAntiRevoke
                                                            action:@selector(onAntiRevoke:)];
     
+    BOOL flag_forward = [[NSUserDefaults standardUserDefaults] boolForKey:kRevokeForwardToSelfRealSend];
+    NSMenuItem *forwardMenu = [NSMenuItem menuItemWithTitle:@"撤回同步到手机(文字提醒)"
+                                                     action:@selector(onRevokeForwardToSelfRealSend:)
+                                                     target:self
+                                              keyEquivalent:@""
+                                                      state:flag_forward];
+    
+    NSMenu *revokeGroupSub = [[NSMenu alloc] initWithTitle:@"消息撤回"];
+    [revokeGroupSub addItems:@[
+        antiRevokeMenu,
+        forwardMenu,
+    ]];
+    
+    NSMenuItem *revokeGroup = [[NSMenuItem alloc] init];
+    revokeGroup.title = @"消息撤回";
+    revokeGroup.target = self;
+    revokeGroup.enabled = YES;
+    revokeGroup.submenu = revokeGroupSub;
+    
     NSMenuItem *exitChatroomMenu = [self ym_toggleMenuItemWithTitle:@"退群监控"
                                                                 key:kExitChatroom
                                                              action:@selector(onExitChatroom:)];
@@ -75,13 +94,6 @@
                                                        target:self
                                                 keyEquivalent:@""
                                                         state:NO];
-    
-    BOOL flag_forward = [[NSUserDefaults standardUserDefaults] boolForKey:kRevokeForwardToSelfRealSend];
-    NSMenuItem *forwardMenu = [NSMenuItem menuItemWithTitle:@"撤回转发给我"
-                                                     action:@selector(onRevokeForwardToSelfRealSend:)
-                                                     target:self
-                                              keyEquivalent:@""
-                                                      state:flag_forward];
    
     NSString *version = [NSString stringWithFormat:@"当前版本 %@", kCurrentVersion];
     NSMenuItem *currentVersionMenu = [NSMenuItem menuItemWithTitle:version
@@ -94,9 +106,8 @@
     NSMenu *subMenu = [[NSMenu alloc] initWithTitle:@"苏维埃助手"];
     [subMenu addItems:@[
         antiUpdateMenu,
-        antiRevokeMenu,
+        revokeGroup,
         groupMenu,
-        forwardMenu,
         autoLoginMenu,
         useSystemWebMenu,
         newWeChatMenu,

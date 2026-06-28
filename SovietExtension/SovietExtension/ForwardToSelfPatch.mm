@@ -211,9 +211,19 @@ static NSString *YMBuildRevokeForwardNotice(NSString *sessionText,
     }
     [notice appendFormat:@"撤回人:%@\n", revokerDisplay.length > 0 ? revokerDisplay : @"***"];
     [notice appendFormat:@"内容:%@", contentDisplay.length > 0 ? contentDisplay : @"（空）"];
+    //以后能发送media类型消息后再打开
+//    if (originType != 1) {
+//        [notice appendString:@"\n(请保证网络良好)"];
+//    }
     if (originType != 1) {
-        [notice appendString:@"\n(请保证网络良好)"];
+        [notice appendString:@"\n(非文字消息只做提醒)"];
     }
+    
+    NSTimeInterval interg = [[NSDate date] timeIntervalSince1970];
+    NSDateFormatter *dateFmt = [[NSDateFormatter alloc] init];
+    [dateFmt setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    NSString* timeStr = [dateFmt stringFromDate:[NSDate dateWithTimeIntervalSince1970:interg]];
+    [notice appendFormat:@"\n%@", timeStr];
     return notice;
 }
 
